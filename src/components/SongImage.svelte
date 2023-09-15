@@ -5,7 +5,7 @@
     export let songName: string;
 </script>
 
-<div class={`relative ${$$props.class}`}>
+<div class={`relative pointer-events-none select-none ${$$props.class}`}>
     <img src={vinyle} alt="vinyle" width="500" class="spin drop-shadow">
     <img src={image} alt={songName} class="spin-center object-cover rounded-full w-[32%] absolute top-1/2 left-1/2">
     <div class="spin-center h-4 w-4 shadow-inner bg-gray-200 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
