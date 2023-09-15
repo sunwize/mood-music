@@ -12,8 +12,6 @@
 	let search: string;
 	let searching: boolean;
 
-	song.set(data.song);
-
 	$: thumbnail = $song?.thumbnails[0]?.url.split("=w")[0] + "=w500-h500-l90-rj";
 	$: artist = $song?.artists.map((artist: { name: string }) => artist.name).join(" - ");
 
@@ -26,6 +24,7 @@
 	};
 
 	onMount(() => {
+		song.set(data.song);
 		audio.volume = 0.2;
 	});
 </script>
@@ -46,7 +45,7 @@
 			<SongImage image={thumbnail} songName={$song.name} class="mb-5"/>
 			<h1 class="text-4xl font-bold text-center mb-3">{$song.name}</h1>
 			<p class="text-2xl opacity-70 text-center mb-12">{artist}</p>
-			<audio bind:this={audio} src={$song.url} controls></audio>
+			<audio bind:this={audio} src={$song.url} controls class="flex-1"></audio>
 		{/if}
 	</div>
 </section>
