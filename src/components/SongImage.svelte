@@ -1,5 +1,5 @@
 <script lang="ts">
-    import vinyle from '$lib/images/vinyle.png';
+    import vinyle from "$lib/images/vinyle.png";
 
     export let image: string;
     export let songName: string;
