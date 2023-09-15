@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { PageData } from "./$types";
+	import type {PageData} from "./$types";
 	import SongImage from "../components/SongImage.svelte";
-	import { onMount } from "svelte";
-	import { Button, Search, Spinner } from "flowbite-svelte";
-	import { goto } from "$app/navigation";
+	import {onMount} from "svelte";
+	import {Button, Search, Spinner} from "flowbite-svelte";
+	import {goto} from "$app/navigation";
 
 	export let data: PageData;
 
