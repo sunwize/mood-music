@@ -3,13 +3,18 @@
     import { onDestroy, onMount } from "svelte";
     import { BackwardStepSolid, ForwardStepSolid, PauseSolid, PlaySolid } from "flowbite-svelte-icons";
     import { Button } from "flowbite-svelte";
+    import { formatSongTime } from "$lib/utils/formatTime";
 
     let audio: HTMLAudioElement;
-    let progress = 0;
+    let currentTime = 0;
+    let duration = 0;
     let playing = false;
     let seeking = false;
     let loading = false;
 
+    $: progress = currentTime === 0 ? 0 : currentTime * 100 / duration;
+    $: progressDisplayTime = formatSongTime(currentTime, duration);
+    $: durationDisplayTime = formatSongTime(duration, duration);
     $: inputStyle = `--progress: ${progress}%`;
 
     const playOrPause = () => playing ? audio?.pause() : audio?.play();
@@ -32,10 +37,14 @@
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
         audio.addEventListener("loadstart", () => loading = true);
-        audio.addEventListener("canplay", () => loading = false);
+        audio.addEventListener("canplay", () => {
+            loading = false;
+            duration = audio.duration;
+        });
         audio.addEventListener("timeupdate", () => {
             if (seeking) return;
-            progress = audio.currentTime === 0 ? 0 : audio.currentTime * 100 / audio.duration;
+            currentTime = audio.currentTime;
+            duration = audio.duration ?? 0;
         });
     });
 
@@ -65,6 +74,10 @@
     </div>
     <div on:mousedown={onMouseDown} on:mouseup={onMouseUp} role="button" tabindex="-1">
         <input bind:value={progress} on:change={seek} disabled={loading} style={inputStyle} type="range" min="0" max="100">
+    </div>
+    <div class="flex justify-between opacity-70 text-sm">
+        <div>{progressDisplayTime}</div>
+        <div>{durationDisplayTime}</div>
     </div>
 </div>
 
