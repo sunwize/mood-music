@@ -37,8 +37,8 @@
 		</div>
 		{#if $song}
 			<SongImage image={$thumbnail} songName={$song.name} class="w-[40vh] mx-auto mb-5"/>
-			<h1 class="text-4xl font-bold text-center mb-3">{$song.name}</h1>
-			<p class="text-2xl opacity-70 text-center mb-5">{$artist}</p>
+			<h1 class="text-4xl font-bold text-center mb-2">{$song.name}</h1>
+			<p class="text-2xl opacity-70 text-center mb-10">{$artist}</p>
 			<MusicPlayer />
 		{/if}
 	</div>
