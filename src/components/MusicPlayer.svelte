@@ -18,7 +18,10 @@
     $: inputStyle = `--progress: ${progress}%`;
 
     const playOrPause = () => playing ? audio?.pause() : audio?.play();
-    const seek = () => audio.currentTime = progress * audio.duration / 100;
+    const seek = () => {
+        audio.currentTime = progress * audio.duration / 100;
+        currentTime = audio.currentTime;
+    };
     const onMouseDown = () => seeking = true;
     const onMouseUp = () => seeking = false;
     const loadSong = (url: string) => {
@@ -39,12 +42,12 @@
         audio.addEventListener("loadstart", () => loading = true);
         audio.addEventListener("canplay", () => {
             loading = false;
-            duration = audio.duration;
+            duration = isNaN(audio.duration) ? 0 : audio.duration;
         });
         audio.addEventListener("timeupdate", () => {
             if (seeking) return;
-            currentTime = audio.currentTime;
-            duration = audio.duration ?? 0;
+            currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
+            duration = isNaN(audio.duration) ? 0 : audio.duration;
         });
     });
 

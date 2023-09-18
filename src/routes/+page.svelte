@@ -1,12 +1,9 @@
 <script lang="ts">
-	import type { PageData } from "./$types";
 	import SongImage from "../components/SongImage.svelte";
 	import { Button, Search, Spinner } from "flowbite-svelte";
-	import { goto } from "$app/navigation";
 	import { song, thumbnail, artist } from "$lib/store";
 	import MusicPlayer from "../components/MusicPlayer.svelte";
-
-	export let data: PageData;
+	import type { Song } from "../types/song";
 
 	let search: string;
 	let searching: boolean;
@@ -14,13 +11,18 @@
 	const searchSong = async () => {
 		if (!search) return;
 		searching = true;
-		await goto(`/?q=${search}`);
+		await fetch("/api/generate-playlist", {
+			method: "POST",
+			body: JSON.stringify({
+				prompt: search,
+			}),
+		})
+			.then(res => res.json())
+			.then((playlist: Song[]) => {
+				song.set(playlist[0]);
+			});
 		searching = false;
 	};
-
-	$: {
-		song.set(data.song);
-	}
 </script>
 
 <section class="dark text-white h-full py-12">
