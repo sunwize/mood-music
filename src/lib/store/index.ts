@@ -1,10 +1,11 @@
+import type { SongDetailed } from "ytmusic-api";
 import { derived, writable } from "svelte/store";
-import type { Song } from "../../types/song";
+import { getLargeThumbnail } from "$lib/utils/thumbnails";
 
-export const song = writable<Song|null>(null);
+export const song = writable<SongDetailed|null>(null);
 export const thumbnail = derived(
     song,
-    ($song) => $song?.thumbnails[0]?.url.split("=w")[0] + "=w500-h500-l90-rj",
+    ($song) => $song?.thumbnails[0]?.url ? getLargeThumbnail($song?.thumbnails[0].url) : "",
 );
 export const artist = derived(
     song,

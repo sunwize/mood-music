@@ -1,115 +1,95 @@
 <script lang="ts">
-    import { song } from "$lib/store";
-    import { onDestroy, onMount } from "svelte";
-    import { BackwardStepSolid, ForwardStepSolid, PauseSolid, PlaySolid } from "flowbite-svelte-icons";
-    import { Button } from "flowbite-svelte";
-    import { formatSongTime } from "$lib/utils/formatTime";
+import { Button } from "flowbite-svelte";
+import { BackwardStepSolid, ForwardStepSolid, PauseSolid, PlaySolid } from "flowbite-svelte-icons";
+import Slider from "./Slider.svelte";
+import { formatSongTime } from "$lib/utils/formatTime";
+import { onDestroy, onMount } from "svelte";
+import { song } from "$lib/store";
+import type { Song } from "../types/song";
 
-    let audio: HTMLAudioElement;
-    let currentTime = 0;
-    let duration = 0;
-    let playing = false;
-    let seeking = false;
-    let loading = false;
+let audio: HTMLAudioElement;
+let currentTime = 0;
+let duration = 0;
+let playing = false;
+let seeking = false;
+let loading = false;
 
-    $: progress = currentTime === 0 ? 0 : currentTime * 100 / duration;
-    $: progressDisplayTime = formatSongTime(currentTime, duration);
-    $: durationDisplayTime = formatSongTime(duration, duration);
-    $: inputStyle = `--progress: ${progress}%`;
+$: progress = currentTime === 0 ? 0 : currentTime * 100 / duration;
+$: progressDisplayTime = formatSongTime(currentTime, duration);
+$: durationDisplayTime = formatSongTime(duration, duration);
 
-    const playOrPause = () => playing ? audio?.pause() : audio?.play();
-    const seek = () => {
-        audio.currentTime = progress * audio.duration / 100;
-        currentTime = audio.currentTime;
-    };
-    const onMouseDown = () => seeking = true;
-    const onMouseUp = () => seeking = false;
-    const loadSong = (url: string) => {
-        if (!audio) return;
-        audio.src = url;
-        audio.currentTime = 0;
-        playing = false;
-        audio.pause();
-        audio.load();
-    };
+const playOrPause = () => playing ? audio?.pause() : audio?.play();
+const seek = () => {
+	audio.currentTime = progress * audio.duration / 100;
+	currentTime = audio.currentTime;
+};
+const onMouseDown = () => seeking = true;
+const onMouseUp = () => seeking = false;
+const loadSongFromUrl = async (videoId: string) => {
+	const { url }: { url: string } = await fetch(`/api/song/${videoId}`)
+		.then((res) => res.json());
+	return loadSong(url);
+};
+const loadSong = (url: string) => {
+	if (!audio) return;
+	audio.src = url;
+	audio.currentTime = 0;
+	playing = false;
+	audio.pause();
+	audio.load();
+};
 
-    onMount(() => {
-        audio = new Audio();
-        audio.src = $song?.url || "";
+onMount(() => {
+	audio = new Audio();
+	audio.volume = 0.1;
 
-        audio.addEventListener("play", () => playing = true);
-        audio.addEventListener("pause", () => playing = false);
-        audio.addEventListener("loadstart", () => loading = true);
-        audio.addEventListener("canplay", () => {
-            loading = false;
-            duration = isNaN(audio.duration) ? 0 : audio.duration;
-        });
-        audio.addEventListener("timeupdate", () => {
-            if (seeking) return;
-            currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
-            duration = isNaN(audio.duration) ? 0 : audio.duration;
-        });
-    });
+	if (!audio.src && $song) {
+		loadSongFromUrl($song.videoId);
+	}
 
-    const unsubscribe = song.subscribe((value) => {
-        if (!value || !audio) return;
-        loadSong(value.url);
-    });
+	audio.addEventListener("play", () => playing = true);
+	audio.addEventListener("pause", () => playing = false);
+	audio.addEventListener("loadstart", () => loading = true);
+	audio.addEventListener("canplay", () => {
+		loading = false;
+		duration = isNaN(audio.duration) ? 0 : audio.duration;
+	});
+	audio.addEventListener("timeupdate", () => {
+		if (seeking) return;
+		currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
+		duration = isNaN(audio.duration) ? 0 : audio.duration;
+	});
+});
 
-    onDestroy(unsubscribe);
+const unsubscribe = song.subscribe(async (value) => {
+	if (!value || !audio) return;
+	await loadSongFromUrl(value.videoId);
+});
+
+onDestroy(unsubscribe);
 </script>
 
-<div>
-    <div class="flex items-center justify-center gap-3 mb-2">
-        <Button pill outline class="!p-3">
-            <BackwardStepSolid class="pointer-events-none select-none" size="sm" tabindex="-1" />
-        </Button>
-        <Button on:click={playOrPause} pill outline class="!p-4">
-            {#if playing}
-                <PauseSolid class="pointer-events-none" tabindex="-1" />
-            {:else}
-                <PlaySolid class="pointer-events-none" tabindex="-1" />
-            {/if}
-        </Button>
-        <Button pill outline class="!p-3">
-            <ForwardStepSolid class="pointer-events-none" size="sm" tabindex="-1" />
-        </Button>
-    </div>
-    <div on:mousedown={onMouseDown} on:mouseup={onMouseUp} role="button" tabindex="-1">
-        <input bind:value={progress} on:change={seek} disabled={loading} style={inputStyle} type="range" min="0" max="100">
-    </div>
-    <div class="flex justify-between opacity-70 text-sm">
-        <div>{progressDisplayTime}</div>
-        <div>{durationDisplayTime}</div>
-    </div>
-</div>
-
-<style>
-    input[type="range"] {
-        -webkit-appearance: none;
-        appearance: none;
-        background: transparent;
-        cursor: pointer;
-        width: 100%;
-        height: 1rem;
-    }
-
-    input[type="range"]::-webkit-slider-runnable-track {
-        background: rgba(255, 255, 255, 0.2);
-        background-image: linear-gradient(white, white);
-        background-size: var(--progress) 100%;
-        background-repeat: no-repeat;
-        border-radius: 5px;
-        height: 0.2rem;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        margin-top: -0.4rem;
-        background-color: white;
-        box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.5);
-        width: 1rem;
-        height: 1rem;
-    }
-</style>
+<aside class="fixed bottom-0 left-0 w-full bg-black flex justify-center items-center p-3">
+	<div class="flex-1 max-w-3xl">
+		<div class="flex justify-center items-center gap-3 mb-1">
+			<Button pill outline class="!p-2">
+				<BackwardStepSolid class="pointer-events-none" size="sm" tabindex="-1" />
+			</Button>
+			<Button on:click={playOrPause} pill outline class="!p-3">
+				{#if playing}
+					<PauseSolid class="pointer-events-none" size="md" tabindex="-1" />
+				{:else}
+					<PlaySolid class="pointer-events-none" size="md" tabindex="-1" />
+				{/if}
+			</Button>
+			<Button pill outline class="!p-2">
+				<ForwardStepSolid class="pointer-events-none" size="sm" tabindex="-1" />
+			</Button>
+		</div>
+		<div class="flex items-center gap-2">
+			<div class="text-xs opacity-50">{progressDisplayTime}</div>
+			<Slider bind:value={progress} on:seek={seek} disabled={loading} on:mousedown={onMouseDown} on:mouseup={onMouseUp} class="flex-1" />
+			<div class="text-xs opacity-50">{durationDisplayTime}</div>
+		</div>
+	</div>
+</aside>

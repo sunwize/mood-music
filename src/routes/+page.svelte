@@ -1,35 +1,33 @@
 <script lang="ts">
-	import SongImage from "../components/SongImage.svelte";
+	import type { SongDetailed } from "ytmusic-api";
 	import { Button, Search, Spinner } from "flowbite-svelte";
-	import { song, thumbnail, artist } from "$lib/store";
+
+	import SearchResultItem from "../components/SearchResultItem.svelte";
 	import MusicPlayer from "../components/MusicPlayer.svelte";
-	import type { Song } from "../types/song";
 
-	let search: string;
+	let query: string;
 	let searching: boolean;
+	let results: SongDetailed[] = [];
 
-	const searchSong = async () => {
-		if (!search) return;
-		searching = true;
-		await fetch("/api/generate-playlist", {
-			method: "POST",
-			body: JSON.stringify({
-				prompt: search,
-			}),
-		})
-			.then(res => res.json())
-			.then((playlist: Song[]) => {
-				song.set(playlist[0]);
-			});
-		searching = false;
+	const search = async () => {
+		if (!query) return;
+
+		try {
+			searching = true;
+			results = await fetch(`/api/search?query=${query}`, {
+				method: "GET",
+			}).then((res) => res.json());
+		} finally {
+			searching = false;
+		}
 	};
 </script>
 
 <section class="dark text-white h-full py-12">
 	<div class="max-w-[600px] mx-auto">
 		<div class="w-full mb-12">
-			<Search bind:value={search}>
-				<Button on:click={searchSong}>
+			<Search bind:value={query}>
+				<Button on:click={search}>
 					{#if searching}
 						<Spinner class="mr-3" size="4" color="white"/>
 					{/if}
@@ -37,11 +35,11 @@
 				</Button>
 			</Search>
 		</div>
-		{#if $song}
-			<SongImage image={$thumbnail} songName={$song.name} class="w-[40vh] mx-auto mb-5"/>
-			<h1 class="text-4xl font-bold text-center mb-2">{$song.name}</h1>
-			<p class="text-2xl opacity-70 text-center mb-10">{$artist}</p>
-			<MusicPlayer />
-		{/if}
+		<div class="grid grid-cols-1 gap-3">
+			{#each results as result}
+				<SearchResultItem result={result} />
+			{/each}
+		</div>
+		<MusicPlayer />
 	</div>
 </section>
