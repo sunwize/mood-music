@@ -24,19 +24,19 @@
     };
     const onMouseDown = () => seeking = true;
     const onMouseUp = () => seeking = false;
-    const loadSong = (url: string) => {
-        if (!audio) return;
-        audio.src = url;
-        audio.currentTime = 0;
-        playing = false;
-        audio.pause();
-        audio.load();
-    };
+    // const loadSong = (url: string) => {
+    //     if (!audio) return;
+    //     audio.src = url;
+    //     audio.currentTime = 0;
+    //     playing = false;
+    //     audio.pause();
+    //     audio.load();
+    // };
 
     onMount(() => {
         audio = new Audio();
-        audio.src = $song?.url || "";
 		audio.volume = 0.1;
+		// TODO: Load the song
 
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
@@ -54,7 +54,7 @@
 
     const unsubscribe = song.subscribe((value) => {
         if (!value || !audio) return;
-        loadSong(value.url);
+		// TODO: Load the song
     });
 
     onDestroy(unsubscribe);

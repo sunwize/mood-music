@@ -5,7 +5,6 @@ import Slider from "./Slider.svelte";
 import { formatSongTime } from "$lib/utils/formatTime";
 import { onDestroy, onMount } from "svelte";
 import { song } from "$lib/store";
-import type { Song } from "../types/song";
 
 let audio: HTMLAudioElement;
 let currentTime = 0;
