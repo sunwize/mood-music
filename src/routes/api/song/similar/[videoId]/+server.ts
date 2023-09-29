@@ -9,7 +9,7 @@ import { levenshteinDistance } from "$lib/utils/levenshteinDistance";
 
 const MAX_SCORE = 1000;
 const RULES_AMOUNT = 5;
-const BANNED_KEYWORDS = ["remix", "karaoke", "instrumental", "bass", "cover", "version", "lyric", "rewind", "live"];
+const BANNED_KEYWORDS = ["remix", "karaoke", "instrumental", "bass", "cover", "version", "lyric", "rewind", "live", "melody", "clip", "pov"];
 
 const getScore = (currentSong: SongFull, similarSong: relatedVideo) => {
 	const percent = MAX_SCORE / RULES_AMOUNT;
@@ -40,6 +40,7 @@ const getScore = (currentSong: SongFull, similarSong: relatedVideo) => {
 		const scoreToRemove = Math.min((percent * 5 / 100) * Math.max(minutes - 5, 0), percent);
 		score -= scoreToRemove;
 	}
+
 
 	// TODO: Check for the banned keywords
 	BANNED_KEYWORDS.forEach((bannedWord) => {
