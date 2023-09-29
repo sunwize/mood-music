@@ -11,10 +11,13 @@ export const GET: RequestHandler = async ({ params }: RequestEvent) => {
 
 	const song = await youtubeMusic.getSong(videoId);
 	const songInfo = await ytdl.getInfo(song.videoId);
+
 	const format = ytdl.chooseFormat(songInfo.formats, { quality: "highestaudio", filter: "audioonly" });
 
 	return json({
-		...song,
-		url: format.url,
+		song: {
+			...song,
+			url: format.url,
+		},
 	});
 };

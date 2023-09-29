@@ -1,10 +1,13 @@
 <script lang="ts">
+import type { SongDetailed } from "ytmusic-api";
 import { Button } from "flowbite-svelte";
 import { BackwardStepSolid, ForwardStepSolid, PauseSolid, PlaySolid } from "flowbite-svelte-icons";
+
 import Slider from "./Slider.svelte";
 import { formatSongTime } from "$lib/utils/formatTime";
 import { onDestroy, onMount } from "svelte";
-import { song } from "$lib/store";
+import { song, thumbnail, artist, songQueue } from "$lib/store";
+import type { Song } from "../types/song";
 
 let audio: HTMLAudioElement;
 let currentTime = 0;
@@ -24,12 +27,13 @@ const seek = () => {
 };
 const onMouseDown = () => seeking = true;
 const onMouseUp = () => seeking = false;
-const loadSongFromUrl = async (videoId: string) => {
-	const { url }: { url: string } = await fetch(`/api/song/${videoId}`)
+const loadSongFromVideoId = async (videoId: string) => {
+	const { song: { url } }: { song: Song } = await fetch(`/api/song/${videoId}`)
 		.then((res) => res.json());
-	return loadSong(url);
+	loadNextSong(videoId);
+	return loadSongUrl(url);
 };
-const loadSong = (url: string) => {
+const loadSongUrl = (url: string) => {
 	if (!audio) return;
 	audio.src = url;
 	audio.currentTime = 0;
@@ -37,13 +41,21 @@ const loadSong = (url: string) => {
 	audio.pause();
 	audio.load();
 };
+const loadNextSong = async (videoId: string) => {
+	const { song }: { song: SongDetailed } = await fetch(`/api/song/similar/${videoId}`)
+		.then((res) => res.json());
+	songQueue.set([
+		...$songQueue,
+		song,
+	]);
+};
 
 onMount(() => {
 	audio = new Audio();
 	audio.volume = 0.1;
 
 	if (!audio.src && $song) {
-		loadSongFromUrl($song.videoId);
+		loadSongFromVideoId($song.videoId);
 	}
 
 	audio.addEventListener("play", () => playing = true);
@@ -58,18 +70,32 @@ onMount(() => {
 		currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
 		duration = isNaN(audio.duration) ? 0 : audio.duration;
 	});
+	audio.addEventListener("ended", () => {
+		const nextSong = $songQueue[$songQueue.length - 1];
+		song.set(nextSong);
+	});
 });
 
 const unsubscribe = song.subscribe(async (value) => {
 	if (!value || !audio) return;
-	await loadSongFromUrl(value.videoId);
+	await loadSongFromVideoId(value.videoId);
+	await audio.play();
 });
 
 onDestroy(unsubscribe);
 </script>
 
-<aside class="fixed bottom-0 left-0 w-full bg-black flex justify-center items-center p-3">
-	<div class="flex-1 max-w-3xl">
+<aside class="fixed bottom-0 left-0 w-full bg-black grid grid-cols-12 gap-3 p-3">
+	<div class="col-span-3 flex items-center gap-5">
+		{#if $song}
+			<img src={$thumbnail} alt={$song.name} class="w-16 aspect-square rounded">
+			<div class="truncate">
+				<p class="text-lg font-medium truncate">{$song.name}</p>
+				<p class="opacity-80 truncate">{$artist}</p>
+			</div>
+		{/if}
+	</div>
+	<div class="col-span-6 max-w-3xl">
 		<div class="flex justify-center items-center gap-3 mb-1">
 			<Button pill outline class="!p-2">
 				<BackwardStepSolid class="pointer-events-none" size="sm" tabindex="-1" />
@@ -91,4 +117,5 @@ onDestroy(unsubscribe);
 			<div class="text-xs opacity-50">{durationDisplayTime}</div>
 		</div>
 	</div>
+	<div class="col-span-3" />
 </aside>
