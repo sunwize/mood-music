@@ -1,13 +1,16 @@
 <script lang="ts">
 	import type { SongDetailed } from "ytmusic-api";
 	import { getSmallThumbnail } from "$lib/utils/thumbnails";
-	import { song } from "$lib/store";
+	import { song, songHistory, songQueue } from "$lib/store";
 
 	export let result: SongDetailed;
 
 	const getResultTypeLabel = (type: string) => type.toLowerCase().charAt(0).toUpperCase() + type.toLowerCase().slice(1);
+	const getArtists = (song: SongDetailed) => song.artists.map((artist) => artist.name).join(", ");
 	const loadSong = () => {
 		if (result) {
+			songHistory.set([]);
+			songQueue.set([]);
 			song.set(result);
 		}
 	};
@@ -17,6 +20,6 @@
 	<img src={getSmallThumbnail(result.thumbnails[0].url)} alt={result.name} class="w-16 aspect-square object-cover">
 	<div class="px-3">
 		<p class="font-medium text-xl">{result.name}</p>
-		<p class="opacity-70">{getResultTypeLabel(result.type)}</p>
+		<p class="opacity-70">{ getArtists(result) } - {getResultTypeLabel(result.type)}</p>
 	</div>
 </article>

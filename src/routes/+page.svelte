@@ -4,9 +4,9 @@
 
 	import SearchResultItem from "../components/SearchResultItem.svelte";
 	import MusicPlayer from "../components/MusicPlayer.svelte";
-	import { song } from "$lib/store";
+	import { api } from "$lib/services/api";
 
-	let query: string = "Happy";
+	let query: string = "Lomepal";
 	let searching: boolean;
 	let results: SongDetailed[] = [];
 
@@ -15,9 +15,11 @@
 
 		try {
 			searching = true;
-			results = await fetch(`/api/search?query=${encodeURIComponent(query)}`, {
-				method: "GET",
-			}).then((res) => res.json());
+			results = await api.get("/api/search", {
+				params: {
+					query,
+				},
+			}).then((res) => res.data);
 		} finally {
 			searching = false;
 		}
@@ -29,7 +31,7 @@
 	};
 </script>
 
-<section class="dark text-white h-full leading-snug py-12">
+<section class="dark text-white h-full leading-snug py-12 pb-32">
 	<div class="max-w-[600px] mx-auto">
 		<div class="w-full mb-12">
 			<Search bind:value={query} on:keypress={onKeyPress}>
@@ -46,8 +48,6 @@
 				<SearchResultItem result={result} />
 			{/each}
 		</div>
-		{#if $song}
-			<MusicPlayer />
-		{/if}
+		<MusicPlayer />
 	</div>
 </section>
