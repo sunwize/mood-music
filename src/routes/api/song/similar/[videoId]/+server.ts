@@ -1,46 +1,43 @@
 import type { RequestEvent, RequestHandler } from "@sveltejs/kit";
-import type { relatedVideo } from "ytdl-core";
-import type { SongFull } from "ytmusic-api";
+import type { SongDetailed, SongFull } from "ytmusic-api";
 import { error, json } from "@sveltejs/kit";
-import ytdl from "ytdl-core";
 
 import { youtubeMusic } from "$lib/youtube-music";
 import { levenshteinDistance } from "$lib/utils/levenshteinDistance";
+
+type SongSuggestion = SongDetailed & { score: number };
 
 const MAX_SCORE = 1000;
 const RULES_AMOUNT = 5;
 const BANNED_KEYWORDS = ["remix", "karaoke", "instrumental", "bass", "cover", "version", "lyric", "rewind", "live", "melody", "clip", "pov"];
 
-const getScore = (currentSong: SongFull, similarSong: relatedVideo) => {
+const getScore = (currentSong: SongFull, similarSong: SongSuggestion, songHistory: SongDetailed[]) => {
 	const percent = MAX_SCORE / RULES_AMOUNT;
 	// TODO: Compare names
-	let distance = levenshteinDistance(currentSong.name, similarSong.title);
+	let distance = levenshteinDistance(currentSong.name, similarSong.name);
 	let score = MAX_SCORE - (percent - Math.min(distance, percent));
 
 	// TODO: Compare artist
 	const artists1 = currentSong.artists.map((artist) => artist.name);
-	const artists2 = typeof similarSong.author === "string" ? similarSong.author : similarSong.author.name;
-	distance = levenshteinDistance(artists1.join(","), artists2);
+	const artists2 = similarSong.artists?.map((artist) => artist.name);
+	distance = levenshteinDistance(artists1.join(","), artists2?.join(","));
 	score -= (percent - Math.min(distance, percent));
 
 	// TODO: Search the artist in the name of title
-	if (similarSong.title?.toLowerCase().includes(
+	if (similarSong.name?.toLowerCase().includes(
 		artists1.join().toLowerCase(),
 	)) {
 		score -= percent;
 	}
 
 	// TODO: Check if already played
-
-	// TODO: Check for the duration
-	if (!similarSong.length_seconds) {
+	if (
+		similarSong.videoId &&
+		songHistory.map((song) => song.videoId)
+			.includes(similarSong.videoId)
+	) {
 		score -= percent;
-	} else {
-		const minutes = Math.floor(similarSong.length_seconds / 60);
-		const scoreToRemove = Math.min((percent * 5 / 100) * Math.max(minutes - 5, 0), percent);
-		score -= scoreToRemove;
 	}
-
 
 	// TODO: Check for the banned keywords
 	BANNED_KEYWORDS.forEach((bannedWord) => {
@@ -53,35 +50,35 @@ const getScore = (currentSong: SongFull, similarSong: relatedVideo) => {
 	return score;
 };
 
-const getSimilarSong = async (currentSong: SongFull, relatedVideos: relatedVideo[]) => {
-	const suggestions: Array<relatedVideo & { score: number }> = relatedVideos.map((video) => ({
-		...video,
-		score: 0,
-	}));
+const getSimilarSong = async (currentSong: SongFull, songHistory: SongDetailed[]) => {
+	const artistIds = currentSong.artists.map((artist) => artist.artistId);
+	const suggestions: SongSuggestion[] = [];
 
-	for (const video of suggestions) {
-		video.score = getScore(currentSong, video);
+	for (const artistId of artistIds) {
+		try {
+			const songs = await youtubeMusic.getArtistSongs(artistId);
+			suggestions.push(
+				...songs.map((song) => ({
+					...song,
+					score: 0,
+				})),
+			);
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
-	suggestions.sort((video1, video2) => video2.score - video1.score);
+	suggestions.forEach((suggestion) => suggestion.score = getScore(currentSong, suggestion, songHistory));
+	suggestions.sort((song1, song2) => song2.score - song1.score);
 
-	const nextSongs = suggestions.slice(0, 3).map((video) => ({
-		title: video.title,
-		score: video.score,
-		duration: video.length_seconds,
-	}));
-
-	console.log("Next playing");
-	console.log(nextSongs[0]);
-
-	for (const video of suggestions) {
-		if (video.id) {
+	for (const suggestion of suggestions) {
+		if (suggestion.videoId) {
 			let song: SongFull;
 
 			try {
-				song = await youtubeMusic.getSong(video.id);
+				song = await youtubeMusic.getSong(suggestion.videoId);
 			} catch {
-				console.log(`Could not fetch ${video.title}`);
+				console.log(`Could not fetch ${suggestion.name}`);
 				continue;
 			}
 
@@ -94,14 +91,14 @@ const getSimilarSong = async (currentSong: SongFull, relatedVideos: relatedVideo
 	return null;
 };
 
-export const GET: RequestHandler = async ({ params }: RequestEvent) => {
+export const POST: RequestHandler = async ({ params, request }: RequestEvent) => {
 	const { videoId } = params;
+	const { songHistory }: { songHistory: SongDetailed[] } = await request.json();
 
 	if (typeof videoId !== "string") throw error(400, `Invalid videoId => provided value: ${videoId}`);
 
 	const song = await youtubeMusic.getSong(videoId);
-	const songInfo = await ytdl.getInfo(videoId);
-	const similarSong = await getSimilarSong(song, songInfo.related_videos);
+	const similarSong = await getSimilarSong(song, songHistory);
 
 	return json({
 		song: similarSong,
