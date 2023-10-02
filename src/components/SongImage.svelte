@@ -6,9 +6,15 @@
 </script>
 
 <div class={`relative pointer-events-none select-none flex justify-center ${$$props.class}`}>
-    <img src={vinyle} alt="vinyle" class="spin w-full drop-shadow block mx-auto">
-    <img src={image} alt={songName} class="spin-center object-cover rounded-full w-[32%] absolute top-1/2 left-1/2">
-    <div class="spin-center h-4 w-4 shadow-inner bg-gray-200 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+    <img
+        src={vinyle}
+        alt="vinyle"
+        class="spin w-full drop-shadow block mx-auto" />
+    <img
+        src={image}
+        alt={songName}
+        class="spin-center object-cover rounded-full w-[32%] absolute top-1/2 left-1/2" />
+    <div class="spin-center h-4 w-4 shadow-inner bg-gray-200 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 </div>
 
 <style>

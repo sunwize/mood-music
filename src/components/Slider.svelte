@@ -1,20 +1,33 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
-	const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
-	export let value: number;
-	export let disabled: boolean;
+    export let value: number;
+    export let disabled: boolean;
 
-	$: inputStyle = `--progress: ${value}%`;
+    $: inputStyle = `--progress: ${value}%`;
 
-	const seek = (event: Event) => dispatch("seek", event);
-	const onMouseDown = (event: Event) => dispatch("mousedown", event);
-	const onMouseUp = (event: Event) => dispatch("mouseup", event);
+    const seek = (event: Event) => dispatch("seek", event);
+    const onMouseDown = (event: Event) => dispatch("mousedown", event);
+    const onMouseUp = (event: Event) => dispatch("mouseup", event);
 </script>
 
-<div on:mousedown={onMouseDown} on:mouseup={onMouseUp} role="button" tabindex="-1" class={$$props.class}>
-	<input bind:value={value} type="range" min="0" max="100" step="0.1" on:change={seek} disabled={disabled} style={inputStyle}>
+<div
+    on:mousedown={onMouseDown}
+    on:mouseup={onMouseUp}
+    role="button"
+    tabindex="-1"
+    class={$$props.class}>
+    <input
+        bind:value={value}
+        type="range"
+        min="0"
+        max="100"
+        step="0.1"
+        on:change={seek}
+        disabled={disabled}
+        style={inputStyle} />
 </div>
 
 <style>

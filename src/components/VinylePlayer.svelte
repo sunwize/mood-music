@@ -35,8 +35,8 @@
 
     onMount(() => {
         audio = new Audio();
-		audio.volume = 0.1;
-		// TODO: Load the song
+        audio.volume = 0.1;
+        // TODO: Load the song
 
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
@@ -54,7 +54,7 @@
 
     const unsubscribe = song.subscribe((value) => {
         if (!value || !audio) return;
-		// TODO: Load the song
+    // TODO: Load the song
     });
 
     onDestroy(unsubscribe);
@@ -62,22 +62,53 @@
 
 <div>
     <div class="flex items-center justify-center gap-3 mb-2">
-        <Button pill outline class="!p-3">
-            <BackwardStepSolid class="pointer-events-none select-none" size="sm" tabindex="-1" />
+        <Button
+            pill
+            outline
+            class="!p-3">
+            <BackwardStepSolid
+                class="pointer-events-none select-none"
+                size="sm"
+                tabindex="-1" />
         </Button>
-        <Button on:click={playOrPause} pill outline class="!p-4">
+        <Button
+            on:click={playOrPause}
+            pill
+            outline
+            class="!p-4">
             {#if playing}
-                <PauseSolid class="pointer-events-none" tabindex="-1" />
+                <PauseSolid
+                    class="pointer-events-none"
+                    tabindex="-1" />
             {:else}
-                <PlaySolid class="pointer-events-none" tabindex="-1" />
+                <PlaySolid
+                    class="pointer-events-none"
+                    tabindex="-1" />
             {/if}
         </Button>
-        <Button pill outline class="!p-3">
-            <ForwardStepSolid class="pointer-events-none" size="sm" tabindex="-1" />
+        <Button
+            pill
+            outline
+            class="!p-3">
+            <ForwardStepSolid
+                class="pointer-events-none"
+                size="sm"
+                tabindex="-1" />
         </Button>
     </div>
-    <div on:mousedown={onMouseDown} on:mouseup={onMouseUp} role="button" tabindex="-1">
-        <input bind:value={progress} on:change={seek} disabled={loading} style={inputStyle} type="range" min="0" max="100">
+    <div
+        on:mousedown={onMouseDown}
+        on:mouseup={onMouseUp}
+        role="button"
+        tabindex="-1">
+        <input
+            bind:value={progress}
+            on:change={seek}
+            disabled={loading}
+            style={inputStyle}
+            type="range"
+            min="0"
+            max="100" />
     </div>
     <div class="flex justify-between opacity-70 text-sm">
         <div>{progressDisplayTime}</div>
