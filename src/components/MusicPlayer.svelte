@@ -9,13 +9,14 @@
     import { onDestroy, onMount } from "svelte";
     import type { Song } from "../types/song";
     import { api } from "$lib/services/api";
+    import { browser } from "$app/environment";
 
     let audio: HTMLAudioElement;
     let currentTime = 0;
     let duration = 0;
     let playing = false;
     let seeking = false;
-    let loading = false;
+    let fetching = false;
 
     $: progress = currentTime === 0 ? 0 : currentTime * 100 / duration;
     $: progressDisplayTime = formatSongTime(currentTime, duration);
@@ -29,10 +30,12 @@
     const onMouseDown = () => seeking = true;
     const onMouseUp = () => seeking = false;
     const loadSongFromVideoId = async (videoId: string) => {
+        fetching = true;
         const { song: { url } }: { song: Song } = await api.get(`/api/song/${videoId}`)
             .then((res) => res.data);
         loadNextSong(videoId);
-        return loadSongUrl(url);
+        loadSongUrl(url);
+        fetching = false;
     };
     const loadSongUrl = (url: string) => {
         if (!audio) return;
@@ -41,6 +44,7 @@
         playing = false;
         audio.pause();
         audio.load();
+        audio.currentTime = currentTime;
     };
     const loadNextSong = async (videoId: string) => {
         const { song }: { song: SongDetailed } = await api.post(`/api/song/similar/${videoId}`, {
@@ -63,7 +67,40 @@
         const nextSong = $songQueue.shift();
 
         if (nextSong) {
+            audio.pause();
+            audio.currentTime = 0;
             song.set(nextSong);
+        }
+    };
+
+    const restoreAudioState = () => {
+        let localStorageEntry = localStorage.getItem("song");
+        if (localStorageEntry) {
+            try {
+                song.set(JSON.parse(localStorageEntry));
+            } catch (err) {
+                console.error("Song could not be restored from local storage", err);
+            }
+        }
+
+        localStorageEntry = localStorage.getItem("currentTime");
+        if (localStorageEntry) {
+            try {
+                const { currentTime: time }: { currentTime: number } = JSON.parse(localStorageEntry);
+                currentTime = time;
+            } catch (err) {
+                console.error("Could not retrieve current time from local storage", err);
+            }
+        }
+
+        localStorageEntry = localStorage.getItem("duration");
+        if (localStorageEntry) {
+            try {
+                const { duration: time }: { duration: number } = JSON.parse(localStorageEntry);
+                duration = time;
+            } catch (err) {
+                console.error("Could not retrieve duration from local storage", err);
+            }
         }
     };
 
@@ -71,27 +108,42 @@
         audio = new Audio();
         audio.volume = 0.1;
 
+        restoreAudioState();
+
         if (!audio.src && $song) {
             loadSongFromVideoId($song.videoId);
         }
 
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
-        audio.addEventListener("loadstart", () => loading = true);
         audio.addEventListener("canplay", () => {
-            loading = false;
             duration = isNaN(audio.duration) ? 0 : audio.duration;
+            localStorage.setItem("duration", JSON.stringify({ duration }));
         });
         audio.addEventListener("timeupdate", () => {
             if (seeking) return;
             currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
             duration = isNaN(audio.duration) ? 0 : audio.duration;
+            localStorage.setItem("currentTime", JSON.stringify({ currentTime }));
         });
         audio.addEventListener("ended", () => playNextSong());
     });
 
     const unsubscribe = song.subscribe(async (value) => {
         if (!value || !audio) return;
+        if (browser) {
+            const localStorageEntry = localStorage.getItem("song");
+            if (localStorageEntry) {
+                const song = JSON.parse(localStorageEntry) as SongDetailed;
+
+                if (song.videoId !== value.videoId) {
+                    currentTime = 0;
+                    audio.currentTime = 0;
+                }
+            }
+            localStorage.setItem("song", JSON.stringify(value));
+        }
+        audio.pause();
         await loadSongFromVideoId(value.videoId);
         await audio.play();
     });
@@ -100,13 +152,14 @@
 </script>
 
 {#if $song}
-    <aside class="fixed bottom-0 left-0 w-full bg-black grid grid-cols-12 gap-3 p-3">
+    <aside class="fixed bottom-0 left-0 w-full bg-black grid grid-cols-12 gap-3 border-t border-white/20 p-3">
         <div class="col-span-3 flex items-center gap-5">
             {#if $song}
                 <img
                     src={$thumbnail}
                     alt={$song.name}
-                    class="w-16 aspect-square rounded" />
+                    class="w-16 aspect-square rounded"
+                />
                 <div class="truncate">
                     <p class="text-lg font-medium truncate">{$song.name}</p>
                     <p class="opacity-80 truncate">{$artist}</p>
@@ -118,41 +171,46 @@
                 <Button
                     pill
                     outline
-                    disabled={loading}
+                    disabled={fetching}
                     class="!p-2">
                     <BackwardStepSolid
                         class="pointer-events-none"
                         size="sm"
-                        tabindex="-1" />
+                        tabindex="-1"
+                    />
                 </Button>
                 <Button
                     on:click={playOrPause}
                     pill
                     outline
-                    disabled={loading}
-                    class="!p-3">
+                    disabled={fetching}
+                    class="!p-3"
+                >
                     {#if playing}
                         <PauseSolid
                             class="pointer-events-none"
                             size="md"
-                            tabindex="-1" />
+                            tabindex="-1"
+                        />
                     {:else}
                         <PlaySolid
                             class="pointer-events-none"
                             size="md"
-                            tabindex="-1" />
+                            tabindex="-1"
+                        />
                     {/if}
                 </Button>
                 <Button
                     on:click={playNextSong}
                     pill
                     outline
-                    disabled={loading}
+                    disabled={fetching}
                     class="!p-2">
                     <ForwardStepSolid
                         class="pointer-events-none"
                         size="sm"
-                        tabindex="-1" />
+                        tabindex="-1"
+                    />
                 </Button>
             </div>
             <div class="flex items-center gap-2">
@@ -160,10 +218,11 @@
                 <Slider
                     bind:value={progress}
                     on:seek={seek}
-                    disabled={loading}
+                    disabled={fetching}
                     on:mousedown={onMouseDown}
                     on:mouseup={onMouseUp}
-                    class="flex-1" />
+                    class="flex-1"
+                />
                 <div class="text-xs opacity-50">{durationDisplayTime}</div>
             </div>
         </div>
