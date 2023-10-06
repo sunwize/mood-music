@@ -1,5 +1,6 @@
 import YTMusic from "ytmusic-api";
 
-export const youtubeMusic = new YTMusic();
+// @ts-ignore
+export const youtubeMusic = YTMusic.default ? new YTMusic.default() : new YTMusic();
 
 await youtubeMusic.initialize();
