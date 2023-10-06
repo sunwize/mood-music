@@ -4,14 +4,18 @@ import { error, json } from "@sveltejs/kit";
 
 import { youtubeMusic } from "$lib/youtube-music";
 import { levenshteinDistance } from "$lib/utils/levenshteinDistance";
+import { shuffle } from "$lib/utils/shuffle";
 
-type SongSuggestion = SongDetailed & { score: number };
+type SongSuggestion = {
+	song: SongDetailed
+	score: number
+};
 
 const MAX_SCORE = 1000;
 const RULES_AMOUNT = 5;
 const BANNED_KEYWORDS = ["remix", "karaoke", "instrumental", "bass", "cover", "version", "lyric", "rewind", "live", "melody", "clip", "pov"];
 
-const getScore = (currentSong: SongFull, similarSong: SongSuggestion, songHistory: SongDetailed[]) => {
+const getSongScore = (currentSong: SongFull, similarSong: SongDetailed, songHistory: SongDetailed[]) => {
 	const percent = MAX_SCORE / RULES_AMOUNT;
 	// TODO: Compare names
 	let distance = levenshteinDistance(currentSong.name, similarSong.name);
@@ -51,34 +55,45 @@ const getScore = (currentSong: SongFull, similarSong: SongSuggestion, songHistor
 };
 
 const getSimilarSong = async (currentSong: SongFull, songHistory: SongDetailed[]) => {
-	const artistIds = currentSong.artists.map((artist) => artist.artistId);
-	const suggestions: SongSuggestion[] = [];
+	const [{ artistId }] = currentSong.artists;
+	let songSuggestions: SongSuggestion[] = [];
 
-	for (const artistId of artistIds) {
-		try {
-			const songs = await youtubeMusic.getArtistSongs(artistId);
-			suggestions.push(
-				...songs.map((song) => ({
-					...song,
-					score: 0,
-				})),
+	if (!artistId) return null;
+
+	try {
+		const artist = await youtubeMusic.getArtist(artistId);
+		const similarArtists = shuffle(artist.similarArtists).slice(0, 3);
+
+		for (const similarArtist of similarArtists) {
+			const a = await youtubeMusic.getArtist(similarArtist.artistId);
+			songSuggestions.push(
+				...a.topSongs
+					.slice(0, 5)
+					.map((song) => ({
+						song: {
+							...song,
+							duration: 0,
+						},
+						score: 0,
+					})),
 			);
-		} catch (error) {
-			console.error(error);
 		}
+	} catch (error) {
+		console.error(error);
 	}
 
-	suggestions.forEach((suggestion) => suggestion.score = getScore(currentSong, suggestion, songHistory));
-	suggestions.sort((song1, song2) => song2.score - song1.score);
+	songSuggestions = shuffle(songSuggestions);
+	songSuggestions.forEach((suggestion) => suggestion.score = getSongScore(currentSong, suggestion.song, songHistory));
+	songSuggestions.sort((song1, song2) => song2.score - song1.score);
 
-	for (const suggestion of suggestions) {
-		if (suggestion.videoId) {
+	for (const songSuggestion of songSuggestions) {
+		if (songSuggestion.song.videoId) {
 			let song: SongFull;
 
 			try {
-				song = await youtubeMusic.getSong(suggestion.videoId);
+				song = await youtubeMusic.getSong(songSuggestion.song.videoId);
 			} catch {
-				console.log(`Could not fetch ${suggestion.name}`);
+				console.log(`Could not fetch ${songSuggestion.song.name}`);
 				continue;
 			}
 
