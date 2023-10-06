@@ -27,7 +27,8 @@
         step="0.1"
         on:change={seek}
         disabled={disabled}
-        style={inputStyle} />
+        style={inputStyle}
+    />
 </div>
 
 <style>

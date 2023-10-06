@@ -23,7 +23,8 @@
     <img
         src={getSmallThumbnail(result.thumbnails[0].url)}
         alt={result.name}
-        class="w-16 aspect-square object-cover" />
+        class="w-16 aspect-square object-cover"
+    />
     <div class="px-3">
         <p class="font-medium text-xl">{result.name}</p>
         <p class="opacity-70">{getArtists(result)} - {getResultTypeLabel(result.type)}</p>
