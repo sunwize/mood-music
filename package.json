@@ -34,6 +34,6 @@
     "axios": "^1.5.1",
     "openai": "^4.7.1",
     "ytdl-core": "^4.11.5",
-    "ytmusic-api": "^4.3.0"
+    "ytmusic-api": "^4.4.0"
   }
 }
