@@ -7,7 +7,6 @@
     import Slider from "./Slider.svelte";
     import { formatSongTime } from "$lib/utils/formatTime";
     import { onDestroy, onMount } from "svelte";
-    import type { Song } from "../types/song";
     import { api } from "$lib/services/api";
     import { browser } from "$app/environment";
 
@@ -16,7 +15,7 @@
     let duration = 0;
     let playing = false;
     let seeking = false;
-    let fetching = false;
+    let loading = false;
 
     $: progress = currentTime === 0 ? 0 : currentTime * 100 / duration;
     $: progressDisplayTime = formatSongTime(currentTime, duration);
@@ -30,16 +29,11 @@
     const onMouseDown = () => seeking = true;
     const onMouseUp = () => seeking = false;
     const loadSongFromVideoId = async (videoId: string) => {
-        fetching = true;
-        const { song: { url } }: { song: Song } = await api.get(`/api/song/${videoId}`)
-            .then((res) => res.data);
         loadNextSong(videoId);
         loadSongUrl(videoId);
-        fetching = false;
     };
     const loadSongUrl = (videoId: string) => {
         if (!audio) return;
-        // audio.src = url;
         audio.src = `${window.origin}/api/song/listen/${videoId}`;
         audio.currentTime = 0;
         playing = false;
@@ -103,9 +97,6 @@
             }
         }
     };
-    const listen = async (videoId: string) => {
-        const data = await api.get(`/api/song/listen/${videoId}`);
-    };
 
     onMount(() => {
         audio = new Audio();
@@ -120,6 +111,7 @@
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
         audio.addEventListener("canplay", () => {
+            loading = false;
             duration = isNaN(audio.duration) ? 0 : audio.duration;
             localStorage.setItem("duration", JSON.stringify({ duration }));
         });
@@ -130,6 +122,7 @@
             localStorage.setItem("currentTime", JSON.stringify({ currentTime }));
         });
         audio.addEventListener("ended", () => playNextSong());
+        audio.addEventListener("loadstart", () => loading = true);
     });
 
     const unsubscribe = song.subscribe(async (value) => {
@@ -174,7 +167,7 @@
                 <Button
                     pill
                     outline
-                    disabled={fetching}
+                    disabled={loading}
                     class="!p-2">
                     <BackwardStepSolid
                         class="pointer-events-none"
@@ -186,7 +179,7 @@
                     on:click={playOrPause}
                     pill
                     outline
-                    disabled={fetching}
+                    disabled={loading}
                     class="!p-3"
                 >
                     {#if playing}
@@ -207,7 +200,7 @@
                     on:click={playNextSong}
                     pill
                     outline
-                    disabled={fetching}
+                    disabled={loading}
                     class="!p-2">
                     <ForwardStepSolid
                         class="pointer-events-none"
@@ -221,7 +214,7 @@
                 <Slider
                     bind:value={progress}
                     on:seek={seek}
-                    disabled={fetching}
+                    disabled={loading}
                     on:mousedown={onMouseDown}
                     on:mouseup={onMouseUp}
                     class="flex-1"
