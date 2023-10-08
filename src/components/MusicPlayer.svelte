@@ -110,6 +110,7 @@
 
         audio.addEventListener("play", () => playing = true);
         audio.addEventListener("pause", () => playing = false);
+        audio.addEventListener("loadstart", () => loading = true);
         audio.addEventListener("canplay", () => {
             loading = false;
             duration = isNaN(audio.duration) ? 0 : audio.duration;
@@ -122,7 +123,6 @@
             localStorage.setItem("currentTime", JSON.stringify({ currentTime }));
         });
         audio.addEventListener("ended", () => playNextSong());
-        audio.addEventListener("loadstart", () => loading = true);
     });
 
     const unsubscribe = song.subscribe(async (value) => {
