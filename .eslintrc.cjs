@@ -80,6 +80,15 @@ module.exports = {
 					"closingBrace": "never"
 				}
 			}
+		],
+		"sort-imports": [
+			"error",
+			{
+				"ignoreCase": true,
+				"ignoreDeclarationSort": true,
+				"ignoreMemberSort": false,
+				"memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+			}
 		]
 	},
 };

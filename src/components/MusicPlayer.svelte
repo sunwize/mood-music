@@ -3,7 +3,7 @@
     import { Button } from "flowbite-svelte";
     import { BackwardStepSolid, ForwardStepSolid, PauseSolid, PlaySolid } from "flowbite-svelte-icons";
 
-    import { song, thumbnail, artist, songQueue, songHistory } from "$lib/store";
+    import { artist, song, songHistory, songQueue, thumbnail } from "$lib/store";
     import Slider from "./Slider.svelte";
     import { formatSongTime } from "$lib/utils/formatTime";
     import { onDestroy, onMount } from "svelte";
@@ -34,12 +34,13 @@
         const { song: { url } }: { song: Song } = await api.get(`/api/song/${videoId}`)
             .then((res) => res.data);
         loadNextSong(videoId);
-        loadSongUrl(url);
+        loadSongUrl(videoId);
         fetching = false;
     };
-    const loadSongUrl = (url: string) => {
+    const loadSongUrl = (videoId: string) => {
         if (!audio) return;
-        audio.src = url;
+        // audio.src = url;
+        audio.src = `${window.origin}/api/song/listen/${videoId}`;
         audio.currentTime = 0;
         playing = false;
         audio.pause();
@@ -72,7 +73,6 @@
             song.set(nextSong);
         }
     };
-
     const restoreAudioState = () => {
         let localStorageEntry = localStorage.getItem("song");
         if (localStorageEntry) {
@@ -102,6 +102,9 @@
                 console.error("Could not retrieve duration from local storage", err);
             }
         }
+    };
+    const listen = async (videoId: string) => {
+        const data = await api.get(`/api/song/listen/${videoId}`);
     };
 
     onMount(() => {
