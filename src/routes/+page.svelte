@@ -32,8 +32,8 @@
 </script>
 
 <section class="dark text-white h-full leading-snug py-6 md:py-12 pb-32">
-    <div class="max-w-[600px] mx-auto px-3">
-        <div class="w-full mb-12">
+    <div class="max-w-[600px] mx-auto">
+        <div class="w-full mb-6 md:mb-12 px-3">
             <Search
                 bind:value={query}
                 on:keypress={onKeyPress}>
@@ -48,7 +48,7 @@
                 </Button>
             </Search>
         </div>
-        <div class="grid grid-cols-1 gap-3">
+        <div class="grid grid-cols-1">
             {#each results as result}
                 <SearchResultItem result={result} />
             {/each}

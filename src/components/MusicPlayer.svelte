@@ -148,19 +148,17 @@
 </script>
 
 {#if $song}
-    <aside class="fixed bottom-0 left-0 w-full bg-black grid grid-cols-12 gap-3 border-t border-white/20 p-3">
+    <aside class="hidden md:grid fixed bottom-0 left-0 w-full bg-black grid-cols-12 gap-3 border-t border-white/30 p-3">
         <div class="col-span-3 flex items-center gap-5">
-            {#if $song}
-                <img
-                    src={$thumbnail}
-                    alt={$song.name}
-                    class="w-16 aspect-square rounded"
-                />
-                <div class="truncate">
-                    <p class="text-lg font-medium truncate">{$song.name}</p>
-                    <p class="opacity-80 truncate">{$artist}</p>
-                </div>
-            {/if}
+            <img
+                src={$thumbnail}
+                alt={$song.name}
+                class="w-16 aspect-square rounded"
+            />
+            <div class="truncate">
+                <p class="text-lg font-medium truncate">{$song.name}</p>
+                <p class="opacity-80 truncate">{$artist}</p>
+            </div>
         </div>
         <div class="col-span-6 max-w-3xl">
             <div class="flex justify-center items-center gap-3 mb-1">
@@ -223,5 +221,56 @@
             </div>
         </div>
         <div class="col-span-3" />
+    </aside>
+    <aside class="block md:hidden fixed bottom-0 left-0 w-full bg-black border-t border-white/30 p-3">
+        <div class="grid grid-cols-12 gap-3">
+            <div class="col-span-2 flex items-center justify-center">
+                <img
+                    src={$thumbnail}
+                    alt={$song.name}
+                    class="w-12 aspect-square rounded"
+                />
+            </div>
+            <div class="col-span-8 truncate flex flex-col justify-center">
+                <h2 class="font-medium truncate">{$song.name}</h2>
+                <p class="text-sm">{$artist}</p>
+            </div>
+            <div class="col-span-2 flex items-center justify-center">
+                <Button
+                    on:click={playOrPause}
+                    color="none"
+                    pill
+                    outline
+                    disabled={loading}
+                    class="!p-3"
+                >
+                    {#if playing}
+                        <PauseSolid
+                            class="pointer-events-none"
+                            size="md"
+                            tabindex="-1"
+                        />
+                    {:else}
+                        <PlaySolid
+                            class="pointer-events-none"
+                            size="md"
+                            tabindex="-1"
+                        />
+                    {/if}
+                </Button>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 mt-3">
+            <div class="text-xs opacity-50">{progressDisplayTime}</div>
+            <Slider
+                bind:value={progress}
+                on:seek={seek}
+                disabled={loading}
+                on:mousedown={onMouseDown}
+                on:mouseup={onMouseUp}
+                class="flex-1"
+            />
+            <div class="text-xs opacity-50">{durationDisplayTime}</div>
+        </div>
     </aside>
 {/if}

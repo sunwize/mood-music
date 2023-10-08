@@ -16,6 +16,8 @@
 <div
     on:mousedown={onMouseDown}
     on:mouseup={onMouseUp}
+    on:touchstart={onMouseDown}
+    on:touchend={onMouseUp}
     role="button"
     tabindex="-1"
     class={$$props.class}>

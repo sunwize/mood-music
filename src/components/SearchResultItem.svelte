@@ -19,14 +19,14 @@
 <article
     on:click={loadSong}
     role="presentation"
-    class="flex items-center hover:bg-white/10 active:bg-white/20 cursor-pointer select-none">
+    class="flex items-center hover:bg-white/10 active:bg-white/20 cursor-pointer select-none py-2 px-3">
     <img
         src={getSmallThumbnail(result.thumbnails[0].url)}
         alt={result.name}
         class="w-16 aspect-square object-cover"
     />
-    <div class="px-3">
-        <p class="font-medium text-xl">{result.name}</p>
+    <div class="px-3 truncate">
+        <p class="font-medium text-xl truncate">{result.name}</p>
         <p class="opacity-70">{getArtists(result)} - {getResultTypeLabel(result.type)}</p>
     </div>
 </article>
