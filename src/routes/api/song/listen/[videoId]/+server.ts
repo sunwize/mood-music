@@ -13,17 +13,9 @@ export const GET: RequestHandler = async ({ params, request, setHeaders }: Reque
 
 	if (!format.url) throw error(400, `Invalid format => provided value: ${format}`);
 
-	// const { data: stream, headers } = await axios.get(format.url, {
-	// 	responseType: "stream",
-	// 	headers: {
-	// 		"Origin": "https://music.youtube.com",
-	// 		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-	// 	},
-	// });
-
 	setHeaders({
 		"Accept-Ranges": "bytes",
-		"Content-Type": "video/webm",
+		"Content-Type": "audio/webm",
 	});
 
 	const range = request.headers.get("range");
