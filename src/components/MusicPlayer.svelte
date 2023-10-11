@@ -148,7 +148,7 @@
 </script>
 
 {#if $song}
-    <aside class="hidden md:grid fixed bottom-0 left-0 w-full bg-black grid-cols-12 gap-3 border-t border-white/30 p-3">
+    <aside class="hidden md:grid w-full bg-black grid-cols-12 gap-3 border-t border-white/30 p-3">
         <div class="col-span-3 flex items-center gap-5">
             <img
                 src={$thumbnail}
@@ -166,7 +166,8 @@
                     pill
                     outline
                     disabled={loading}
-                    class="!p-2">
+                    class="!p-2"
+                >
                     <BackwardStepSolid
                         class="pointer-events-none"
                         size="sm"
@@ -222,7 +223,7 @@
         </div>
         <div class="col-span-3" />
     </aside>
-    <aside class="block md:hidden fixed bottom-0 left-0 w-full bg-black border-t border-white/30 p-3">
+    <aside class="block md:hidden w-full bg-black border-t border-white/30 p-3">
         <div class="grid grid-cols-12 gap-3">
             <div class="col-span-2 flex items-center justify-center">
                 <img
