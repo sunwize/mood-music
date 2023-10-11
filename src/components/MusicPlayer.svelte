@@ -82,6 +82,7 @@
             try {
                 const { currentTime: time }: { currentTime: number } = JSON.parse(localStorageEntry);
                 currentTime = time;
+                audio.currentTime = time;
             } catch (err) {
                 console.error("Could not retrieve current time from local storage", err);
             }
@@ -119,7 +120,7 @@
         audio.addEventListener("timeupdate", () => {
             if (seeking) return;
             currentTime = isNaN(audio.currentTime) ? 0 : audio.currentTime;
-            duration = isNaN(audio.duration) ? 0 : audio.duration;
+            duration = isNaN(audio.duration) ? duration ?? 0 : audio.duration;
             localStorage.setItem("currentTime", JSON.stringify({ currentTime }));
         });
         audio.addEventListener("ended", () => playNextSong());
