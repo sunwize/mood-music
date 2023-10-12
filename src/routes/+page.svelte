@@ -6,8 +6,8 @@
     import MusicPlayer from "../components/MusicPlayer.svelte";
     import { api } from "$lib/services/api";
 
-    let query: string = "Lomepal";
-    let searching: boolean;
+    let query = "Lomepal";
+    let searching = false;
     let results: SongDetailed[] = [];
 
     const search = async () => {
