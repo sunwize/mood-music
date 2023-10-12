@@ -44,27 +44,49 @@
     const loadNextSong = async (videoId: string) => {
         const { song }: { song: SongDetailed } = await api.post(`/api/song/similar/${videoId}`, {
             songHistory: $songHistory,
-        })
-            .then((res) => res.data);
-        songQueue.set([
-            ...$songQueue,
-            song,
-        ]);
-    };
-    const playNextSong = () => {
-        if ($song) {
-            songHistory.set([
-                ...$songHistory,
-                $song,
+        }).then((res) => res.data);
+
+        if (song) {
+            songQueue.set([
+                ...$songQueue,
+                song,
             ]);
         }
-
-        const nextSong = $songQueue.shift();
+    };
+    const playNextSong = () => {
+        const nextSong = $songQueue[0];
 
         if (nextSong) {
             audio.pause();
             audio.currentTime = 0;
+
+            songQueue.set($songQueue.slice(1, $songQueue.length));
+            if ($song) {
+                songHistory.set([
+                    $song,
+                    ...$songHistory,
+                ]);
+            }
+
             song.set(nextSong);
+        }
+    };
+    const playPreviousSong = () => {
+        const previousSong = $songHistory[0];
+
+        if (previousSong) {
+            audio.pause();
+            audio.currentTime = 0;
+
+            songHistory.set($songHistory.slice(1, $songHistory.length));
+            if ($song) {
+                songQueue.set([
+                    $song,
+                    ...$songQueue,
+                ]);
+            }
+
+            song.set(previousSong);
         }
     };
     const restoreAudioState = () => {
@@ -124,6 +146,7 @@
             localStorage.setItem("currentTime", JSON.stringify({ currentTime }));
         });
         audio.addEventListener("ended", () => playNextSong());
+        audio.addEventListener("error", () => playNextSong());
     });
 
     const unsubscribe = song.subscribe(async (value) => {
@@ -164,6 +187,7 @@
         <div class="col-span-6 max-w-3xl">
             <div class="flex justify-center items-center gap-3 mb-1">
                 <Button
+                    on:click={playPreviousSong}
                     pill
                     outline
                     disabled={loading}
