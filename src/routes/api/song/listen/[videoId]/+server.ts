@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ params, request, setHeaders }: Reque
 
 	if (typeof videoId !== "string") throw error(400, `Invalid videoId => provided value: ${videoId}`);
 
-	const isAppleUser = !!request.headers.get("user-agent")?.includes("Macintosh");
+	const isAppleUser = ["Macintosh", "iPhone"].some((slug) => !!request.headers.get("user-agent")?.includes(slug));
 
 	const songInfo = await ytdl.getInfo(videoId);
 	const format = isAppleUser
