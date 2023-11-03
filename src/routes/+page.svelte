@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SongDetailed } from "ytmusic-api";
-    import { Button, Listgroup, ListgroupItem, Search, Spinner } from "flowbite-svelte";
+    import { Button, Search, Spinner } from "flowbite-svelte";
 
     import SearchResultItem from "../components/SearchResultItem.svelte";
     import MusicPlayer from "../components/MusicPlayer.svelte";
@@ -49,15 +49,6 @@
                         Search
                     </Button>
                 </Search>
-                {#if false}
-                    <Listgroup
-                        active
-                        class="absolute w-full left-0"
-                    >
-                        <ListgroupItem>Lomepal</ListgroupItem>
-                        <ListgroupItem>Remeo Elvis</ListgroupItem>
-                    </Listgroup>
-                {/if}
             </div>
         </div>
         <div class="grid grid-cols-1 h-full overflow-auto">
